@@ -1,40 +1,43 @@
-import csv
-from timeit import default_timer as timer
+from functions.utils import extract_data
 
 # price = prix en e
 # profit = profit exprimé en % du prixm
 # return = montant gagné en e
 
-available_action_list = []
 
-with open("E:\L7\dataset0.csv", "r") as data_file:
-    csv_reader = csv.DictReader(data_file)
-    for row in csv_reader:
-        available_action_list.append(row)
-
-
-def calculate_comb_cost(comb):
-    cost = 0 #O(1)
-    for action in comb: #O(n)
-        cost += action["price"] #O(1)
-    return cost #O(n)
+def calculate_comb_cost(comb: list):
+    """Take a combination as a list of action and return it's total cost"""
+    cost = 0  # O(1)
+    for action in comb:  # O(n)
+        cost += action["price"]  # O(1)
+    return cost  # O(1)
+    # O(1)*O(n) = O(n)
 
 
-def calculate_comb_returns(comb):
-    returns = 0 #O(1)
-    for action in comb: #O(n)
-        returns += action["returns"] #O(1)
-    return returns #O(n)
+def calculate_comb_returns(comb: list):
+    """Take a combination as a list of action and return it's total returns"""
+    returns = 0
+    for action in comb:
+        returns += action["returns"]
+    return returns  # O(n)
 
 
-def calculate_comb_profit(comb):
-    cost = calculate_comb_cost(comb) #O(n)
-    returns = calculate_comb_returns(comb) #O(n)
-    profit = (returns/cost)*100 #O(1)
-    return profit #O(n)
+def calculate_comb_profit(comb: list):
+    """Take a combination as a list of action and return it's global profit"""
+    cost = calculate_comb_cost(comb)  # O(n)
+    returns = calculate_comb_returns(comb)  # O(n)
+    profit = (returns/cost)*100  # O(5)
+    return profit  # O(n)
 
 
-def prepare_action_list(action_list):
+def prepare_action_list(action_list: list):
+    """Take the csv data as a list,create an empty list to store filtered data.
+    Goes through the csv data, if the action price and profits are above 0,
+    the action price and profit are multiplied by 100 and converted into integers,
+    the action returns are added to the action dictionary and the dictionary is
+    added to the filtered action list
+    Sort the filtered action list from worst[0] to best[-1] then returns it.
+    """
     filtered_actions = []
     for action in action_list: #O(n)
         if float(action["price"]) > 0 and float(action["profit"]) > 0: #O(1)
@@ -48,8 +51,10 @@ def prepare_action_list(action_list):
     return sorted_list #O(n log(n))
 
 
-def knapsack_dynamique(raw_budget, raw_action_list): #n= action_list;w=budget
-    action_list = prepare_action_list(raw_action_list) #O(n log(n))
+def knapsack_dynamique(raw_budget:int, action_list): #n= action_list;w=budget
+    """create a matrice storing the best otpimal solution for each item and weigh available
+    to obtain the best optimal combination,then goes back through the matrice to 
+    return the best combination of action possible as a list."""
     budget = raw_budget*100 #O(1)
     matrice = [[0 for x in range(budget + 1)]
                for x in range(len(action_list)+1)] #O(n*w)
@@ -74,6 +79,7 @@ def knapsack_dynamique(raw_budget, raw_action_list): #n= action_list;w=budget
     #O(n*w)
 
 def return_value_to_normal(action_list):
+    """returns int multiplied by a 100 to their original float value"""
     for action in action_list: #O(n)
         old_price = float(action["price"])/100 #O(1)
         old_profit = float(action["profit"])/100 #O(1)
@@ -82,12 +88,14 @@ def return_value_to_normal(action_list):
     return action_list #O(n)
 
 
-def main_dynamique(budget, action_list):
-    start = timer()  #O(1)
+def main_dynamique(budget: int, data_path: str):
+    """take the budget as an int,the path to the csv file as a string,
+    and display the best combination cost,returns, its global profit 
+    and the actions list"""
+    raw_data = extract_data(data_path)
+    action_list = prepare_action_list(raw_data) #O(n log(n))
     results = knapsack_dynamique(budget, action_list)   #O(n*w)
     restaured_value_results = return_value_to_normal(results) #O(n)
-    end = timer() #O(1)
-    print(f"durée du script: {end-start}")  #O(1)
     print(
         f"cout de la combinaison: {calculate_comb_cost(restaured_value_results)}")  #O(1)
     print(
@@ -97,3 +105,6 @@ def main_dynamique(budget, action_list):
     print("liste des actions:")  #O(1)
     print(restaured_value_results)  #O(1)
      #O(n*w)
+
+if __name__ == "__main__":
+    main_dynamique(500,"E:\L7\Livrable\dataset0.csv")
